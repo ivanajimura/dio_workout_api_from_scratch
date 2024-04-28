@@ -83,15 +83,7 @@ async def post(
             status_code = status.HTTP_400_BAD_REQUEST,
             detail=f"Height {athlete_in.height} is probably wrong. Max height is {athlete_config.max_height}. Insert height in meters"
         )
-    """
-    # Check if length of name is valid
-    #Apparently does not run as Swagger blocks it before
-    if not InputValidator.is_length_acceptable(input = athlete_in.name, max_length = athlete_config.name_max_length):
-        raise HTTPException(
-            status_code = status.HTTP_400_BAD_REQUEST,
-            detail=f"Name {athlete_in.name} is too long"
-        )
-    """
+
     # Check if Name is already in use
     if ((await db_session.execute(select(AthleteModel).filter_by(cpf = athlete_in.cpf))).scalars().first()):
         raise HTTPException(
@@ -121,13 +113,13 @@ async def post(
         response_model = Page[AthleteOut]
 )
 
-async def query(db_session: DatabaseDependency) -> Page[AthleteOut]:
+async def get_all_athletes(db_session: DatabaseDependency) -> Page[AthleteOut]:
     athletes: List[AthleteOut] = (await db_session.execute(select(AthleteModel))).scalars().all()
     #print(athletes)
     #print(type(athletes))
     #return ([AthleteOut.model_validate(athlete) for athlete in athletes])
     return paginate(athletes)
-    
+
 @router.get(
         path = '/name:{name}',
         summary = "Find Athlete by name",
@@ -135,7 +127,7 @@ async def query(db_session: DatabaseDependency) -> Page[AthleteOut]:
         response_model = Page[AthleteOut]
 )
 
-async def query(name: str, db_session: DatabaseDependency) -> Page[AthleteOut]:
+async def get_athlete_by_name(name: str, db_session: DatabaseDependency) -> Page[AthleteOut]:
     
     query = select(AthleteModel).where(AthleteModel.name.contains(name))
     results = await db_session.execute(query)
@@ -154,7 +146,7 @@ async def query(name: str, db_session: DatabaseDependency) -> Page[AthleteOut]:
         response_model = Page[AthleteOut]
 )
 
-async def query(cpf: str, db_session: DatabaseDependency) -> Page[AthleteOut]:
+async def get_athlete_by_cpf(cpf: str, db_session: DatabaseDependency) -> Page[AthleteOut]:
     
     query = select(AthleteModel).where(AthleteModel.cpf.contains(cpf))
     results = await db_session.execute(query)
@@ -174,7 +166,7 @@ async def query(cpf: str, db_session: DatabaseDependency) -> Page[AthleteOut]:
             
 )
 
-async def query(sex: Sex, db_session: DatabaseDependency) -> Page[AthleteOut]:
+async def get_athlete_by_sex(sex: Sex, db_session: DatabaseDependency) -> Page[AthleteOut]:
     
     query = select(AthleteModel).filter_by(sex = sex)
     results = await db_session.execute(query)
@@ -194,7 +186,7 @@ async def query(sex: Sex, db_session: DatabaseDependency) -> Page[AthleteOut]:
         response_model = Page[AthleteOut]
 )
 
-async def query(db_session: DatabaseDependency, min_age: int = 0, max_age: int = 200) -> Page[AthleteOut]:
+async def get_athlete_by_age(db_session: DatabaseDependency, min_age: int = 0, max_age: int = 200) -> Page[AthleteOut]:
     
     query = select(AthleteModel).filter(AthleteModel.age >= min_age, AthleteModel.age <= max_age)
     results = await db_session.execute(query)
@@ -213,7 +205,7 @@ async def query(db_session: DatabaseDependency, min_age: int = 0, max_age: int =
         response_model = Page[AthleteOut]
 )
 
-async def query(db_session: DatabaseDependency, min_weight: int = 0, max_weight: int = athlete_config.max_weight) -> Page[AthleteOut]:
+async def get_athlete_by_weight(db_session: DatabaseDependency, min_weight: int = 0, max_weight: int = athlete_config.max_weight) -> Page[AthleteOut]:
     
     query = select(AthleteModel).filter(AthleteModel.weight >= min_weight, AthleteModel.weight <= max_weight)
     results = await db_session.execute(query)
@@ -232,7 +224,7 @@ async def query(db_session: DatabaseDependency, min_weight: int = 0, max_weight:
         response_model = Page[AthleteOut]
 )
 
-async def query(db_session: DatabaseDependency, min_height: int = 0, max_height: int = athlete_config.max_height) -> Page[AthleteOut]:
+async def get_athlete_by_height(db_session: DatabaseDependency, min_height: int = 0, max_height: int = athlete_config.max_height) -> Page[AthleteOut]:
     
     query = select(AthleteModel).filter(AthleteModel.weight >= min_height, AthleteModel.weight <= max_height)
     results = await db_session.execute(query)
@@ -252,7 +244,7 @@ async def query(db_session: DatabaseDependency, min_height: int = 0, max_height:
         response_model = AthleteOut
 )
 
-async def query(id: UUID4, db_session: DatabaseDependency) -> AthleteOut:
+async def get_athlete_by_id(id: UUID4, db_session: DatabaseDependency) -> AthleteOut:
     athlete: AthleteOut = (
         await db_session.execute(select(AthleteModel).filter_by(id = id))
     ).scalars().first()
@@ -269,7 +261,7 @@ async def query(id: UUID4, db_session: DatabaseDependency) -> AthleteOut:
         response_model = AthleteOut
 )
 
-async def query(
+async def patch(
     id: UUID4,
     db_session: DatabaseDependency,
     athlete_update: AthleteUpdate = Body(...)
@@ -297,7 +289,7 @@ async def query(
         status_code = status.HTTP_204_NO_CONTENT
 )
 
-async def query(id: UUID4, db_session: DatabaseDependency) -> None:
+async def delete(id: UUID4, db_session: DatabaseDependency) -> None:
     athlete: AthleteOut = (
         await db_session.execute(select(AthleteModel).filter_by(id = id))
     ).scalars().first()
